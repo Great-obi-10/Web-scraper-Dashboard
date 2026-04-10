@@ -1,0 +1,309 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&display=swap');
+        
+        :root {
+            --tw-color-primary: #3b82f6;
+        }
+        
+        .tail-container * {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+        
+        .card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        .sidebar-active {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="tail-container bg-slate-950 text-slate-900">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR -->
+        <div class="w-64 bg-[#0f172a] text-white flex flex-col border-r border-slate-800">
+            <!-- Logo -->
+            <div class="px-6 py-8 flex items-center gap-3 border-b border-slate-800">
+                <div class="w-9 h-9 bg-white rounded-2xl flex items-center justify-center shadow-inner">
+                    <span class="text-[#0f172a] text-2xl">🕸️</span>
+                </div>
+                <div>
+                    <h1 class="logo-font text-2xl tracking-tighter">Web Scraper</h1>
+                    <p class="text-xs text-slate-400 -mt-1">Dashboard</p>
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <nav class="flex-1 px-3 py-6 space-y-1">
+                <a href="#" onclick="navigateTo('dashboard')" class="flex items-center gap-3 px-4 py-3 text-white sidebar-active">
+                    <span class="text-xl">🏠</span>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" onclick="navigateTo('data-table')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-300">
+                    <span class="text-xl">📋</span>
+                    <span class="font-medium">Data Table</span>
+                </a>
+                <a href="#" onclick="navigateTo('charts')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-300">
+                    <span class="text-xl">📊</span>
+                    <span class="font-medium">Charts &amp; Analytics</span>
+                </a>
+                <a href="#" onclick="navigateTo('sources')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-300">
+                    <span class="text-xl">🔗</span>
+                    <span class="font-medium">Sources</span>
+                </a>
+                <a href="#" onclick="navigateTo('scheduler')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-300">
+                    <span class="text-xl">⏰</span>
+                    <span class="font-medium">Scheduler</span>
+                </a>
+                <a href="#" onclick="navigateTo('settings')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-300">
+                    <span class="text-xl">⚙️</span>
+                    <span class="font-medium">Settings</span>
+                </a>
+            </nav>
+
+            <!-- SCRAPER STATUS -->
+            <div class="mx-4 mb-6 bg-slate-900 rounded-3xl p-5 border border-slate-700">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+                        <span class="text-emerald-400 font-semibold text-sm">Scraper Status</span>
+                    </div>
+                    <span id="status-text" class="px-3 py-1 text-xs font-medium bg-emerald-400/10 text-emerald-400 rounded-2xl">Running</span>
+                </div>
+                <p class="text-slate-400 text-sm mb-1">Last run: <span id="last-run" class="font-medium text-white">Just now</span></p>
+                
+                <button onclick="runScraperNow()" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-semibold py-4 px-6 rounded-3xl flex items-center justify-center gap-2 text-sm">
+                    <span>▶️</span>
+                    RUN NOW
+                </button>
+            </div>
+
+            <div class="px-6 py-6 text-xs text-slate-500 flex items-center justify-between border-t border-slate-800">
+                <div>Connected to 5 sources</div>
+                <div class="flex items-center gap-1">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                    LIVE
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 overflow-auto bg-slate-100">
+            
+            <!-- TOP BAR -->
+            <div class="h-16 bg-white border-b flex items-center px-8 justify-between sticky top-0 z-50">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="relative flex-1 max-w-md">
+                        <input id="search-input" 
+                               type="text" 
+                               placeholder="Search data, keywords..." 
+                               class="w-full bg-slate-100 border border-transparent focus:border-blue-300 h-11 pl-12 rounded-3xl text-sm focus:outline-none">
+                        <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">🔎</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <!-- Auto-refresh -->
+                    <div onclick="toggleAutoRefresh()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 px-4 h-9 rounded-3xl cursor-pointer transition-colors">
+                        <span class="text-emerald-500 text-sm font-medium">Auto-refresh:</span>
+                        <span id="auto-refresh-status" class="px-3 py-0.5 bg-emerald-400 text-white text-xs font-semibold rounded-2xl">ON</span>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="relative cursor-pointer">
+                        <button onclick="showNotifications()" class="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-2xl relative">
+                            🛎️
+                            <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">3</span>
+                        </button>
+                    </div>
+
+                    <!-- Dark mode toggle (demo) -->
+                    <button onclick="toggleTheme()" class="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-2xl">🌙</button>
+
+                    <!-- User -->
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <div class="text-sm font-semibold">Great</div>
+                            <div class="text-xs text-slate-400">Lagos, NG</div>
+                        </div>
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-inner">👤</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD CONTENT -->
+            <div class="p-8" id="dashboard-content">
+                
+                <!-- METRIC CARDS -->
+                <div class="grid grid-cols-4 gap-6 mb-8">
+                    <!-- Total Items -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-slate-500 text-sm flex items-center gap-2">
+                                    <span class="text-2xl">🏠</span>
+                                    Total Items
+                                </div>
+                                <div id="total-items" class="text-5xl font-semibold mt-2">1,248</div>
+                                <div class="flex items-center gap-1 text-emerald-500 text-sm mt-2">
+                                    <span>↑12%</span>
+                                    <span class="text-slate-400">from last week</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Today -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-slate-500 text-sm flex items-center gap-2">
+                                    <span class="text-2xl">📄</span>
+                                    New Today
+                                </div>
+                                <div id="new-today" class="text-5xl font-semibold mt-2">86</div>
+                                <div class="flex items-center gap-1 text-emerald-500 text-sm mt-2">
+                                    <span>+5 since last run</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sources -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-slate-500 text-sm flex items-center gap-2">
+                                    <span class="text-2xl">📦</span>
+                                    Sources
+                                </div>
+                                <div id="sources-count" class="text-5xl font-semibold mt-2">5</div>
+                                <div class="text-amber-500 text-sm mt-2">Active Websites</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Last Updated -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-slate-500 text-sm flex items-center gap-2">
+                                    <span class="text-2xl">🕒</span>
+                                    Last Updated
+                                </div>
+                                <div id="last-updated" class="text-5xl font-semibold mt-2">2 mins ago</div>
+                                <div class="flex items-center gap-1 text-emerald-400 text-sm mt-2">
+                                    <span class="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                                    LIVE
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    
+                    <!-- TREND CHART -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-semibold text-lg">Scraped Data Trend (Last 7 Days)</h2>
+                            <div class="flex items-center gap-6 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-px bg-blue-500"></div>
+                                    <span class="text-slate-600">Items Collected</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-px bg-emerald-500"></div>
+                                    <span class="text-slate-600">New Items</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-72">
+                            <canvas id="trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- PIE CHART -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-semibold text-lg">Data by Category</h2>
+                        </div>
+                        <div class="flex justify-center">
+                            <div class="w-72 h-72">
+                                <canvas id="category-chart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Legend -->
+                        <div id="category-legend" class="grid grid-cols-2 gap-y-3 text-sm mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM SECTION -->
+                <div class="grid grid-cols-2 gap-6 mt-8">
+                    
+                    <!-- LATEST SCRAPED DATA -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-semibold text-lg">Latest Scraped Data</h2>
+                            <a href="#" onclick="navigateTo('data-table')" class="text-blue-600 text-sm flex items-center gap-1 hover:underline">View all →</a>
+                        </div>
+                        
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b text-xs text-slate-400">
+                                    <th class="py-3 text-left font-medium">Title</th>
+                                    <th class="py-3 text-left font-medium">Source</th>
+                                    <th class="py-3 text-left font-medium">Category</th>
+                                    <th class="py-3 text-left font-medium">Price</th>
+                                    <th class="py-3 text-left font-medium">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="latest-table" class="text-sm divide-y"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- TOP SOURCES -->
+                    <div class="card bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-semibold text-lg">Top Sources</h2>
+                            <a href="#" onclick="navigateTo('sources')" class="text-blue-600 text-sm flex items-center gap-1 hover:underline">View All →</a>
+                        </div>
+                        
+                        <div id="top-sources" class="space-y-6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

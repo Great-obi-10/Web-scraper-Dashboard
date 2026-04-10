@@ -1,0 +1,27 @@
+/* frontend/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+body {
+    font-family: 'Inter', system_ui, sans-serif;
+}
+
+.logo-font {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 25px 25px 50px -12px rgb(0 0 0 / 0.15);
+}
+
+.table-row {
+    transition: background-color 0.2s;
+}
+
+.table-row:hover {
+    background-color: #f8fafc;
+}
